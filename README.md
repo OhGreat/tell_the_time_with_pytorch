@@ -12,10 +12,9 @@ The dataset used for our experiments cosists of 18.000 grayscale images of analo
 
 The main problem of trying to predict time with neural networks is that no loss accounts for the periodicity of time. For example, using a mean squared error loss would confuse the network to think that predictions are further from the ground truth, than they actually are. This can be more intuitively explained with the following example: if our network predicts 11:59 for an image with target value 12:01, the loss function would penalize strictly the model, since it would return an error of 11 hour and 58 minutes, where the real distance would be of only 2 minutes.
 
+In order to solve this issue two main approaches have been used. In the first one, we create a custom loss function. The loss function calculates the error as the minimum between the  
+In the second approach, the labels are encoded into periodic values with sine and cosine transforms.
+
 ## Usage
 
 ## Results and observations
-
-## Future Work
-
-## References
