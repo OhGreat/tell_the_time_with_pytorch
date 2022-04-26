@@ -1,4 +1,6 @@
 __pycache__
 data/__pycache__
+data/images.npy
+data/labels.npy
 images/__pycache__
 notebooks/__pycache__
