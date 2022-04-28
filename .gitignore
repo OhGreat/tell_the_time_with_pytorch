@@ -1,6 +1,9 @@
 __pycache__
-data/__pycache__
 data/images.npy
 data/labels.npy
-images/__pycache__
+data/__pycache__
+classes/__pycache__
 notebooks/__pycache__
+model_weights/__pycache__
+train_plots/__pycache__
+readme_aux/__pycache__

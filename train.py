@@ -1,15 +1,12 @@
 import numpy as np
 import torch
 import time
-import math
-import matplotlib.pyplot as plt
 from torch import nn
 from torch.utils.data import DataLoader, random_split
 from classes.ClockDataset import ClockDataset
 from classes.CommonSenseError import CommonSenseError
 from classes.Models import NN_regression
 from utilities import *
-
 
 def main():
     # main modality
@@ -33,7 +30,7 @@ def main():
         exit()
     learning_rate = 1e-4
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    save_weights = "periodic_labels_2"
+    save_weights = "test"
     save_losses = True
     epochs = 150
     patience = 10
@@ -41,7 +38,7 @@ def main():
     verbose = 2
 
     if verbose > 0:
-        print(f"Running pytrch on {device} device.\n")
+        print(f"Running pytorch on {device} device.\n")
 
     # Load data
     data, labels = load_data()
@@ -119,96 +116,11 @@ def main():
     cse_error = cse(torch.FloatTensor(true_preds),torch.FloatTensor(targets[:,:2]))
     print(f"Common sense error on test dataset: {np.round(cse_error.numpy(),3)}")
 
+    # create and save training plots
     if save_losses:
         train_losses = np.vstack(train_losses)
         test_losses = np.vstack(eval_losses)
         save_train_plot(train_losses, test_losses, save_weights)
-
-def train(dataloader, model, loss_fn, optimizer, device):
-    """ Applies backpropagation to train the model
-    """
-    losses = []
-    model.train()
-    for X, y in dataloader:
-        X, y = X.to(device), y[:, 2:].to(device)
-        # Compute prediction error
-        pred = model(X)
-        loss = loss_fn(pred, y)
-        # Backpropagation
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        losses.append(loss)
-    losses = torch.FloatTensor(losses)
-    return losses
-
-def evaluate(dataloader, model, loss_fn, device):
-    """ Used to evaluate the model on unknown data
-        during training 
-    """
-    model.eval()
-    losses = []
-    with torch.no_grad():
-        for X, y in dataloader:
-            X, y = X.to(device), y[:, 2:].to(device)
-            pred = model(X)
-            loss = loss_fn(pred, y)
-            losses.append(loss)
-    losses = torch.FloatTensor(losses)
-    return losses
-
-
-def predict(dataloader, model, loss_fn, device):
-    """ Returns predictions for the data in the DataLoader 
-        as one single batch.
-    """
-    losses = []
-    predictions = []
-    model.eval()
-    with torch.no_grad():
-        for X, y in dataloader:
-            X, y = X.to(device), y[:,2:].to(device)
-            pred = model(X)
-            predictions.append(pred.cpu().numpy())
-            loss = loss_fn(pred, y)
-            losses.append(loss)
-    losses = torch.FloatTensor(losses)
-    print(f"Avg evaluation loss: {torch.mean(losses):>8f} \n")
-    # Normalize values bigger/smaller than the max/min possible
-    predictions  = np.vstack(predictions)
-    predictions[ predictions > 1 ] = 1
-    predictions[ predictions < -1 ] = -1
-    return predictions
-
-def denormalize_time(predictions):
-    """ Returns the corresponding hour and minute
-        for each entry of the predicted sine and cosine values.
-    """
-    true_preds = []
-    for h_cos,h_sin,m_cos,m_sin in predictions:
-        h_angle = math.atan2(h_sin, h_cos)
-        h_angle *= 180 / math.pi
-        if h_angle < 0: h_angle += 360
-
-        m_angle = math.atan2(m_sin, m_cos)
-        m_angle *= 180 / math.pi
-        if m_angle < 0: m_angle += 360
-
-        true_hour = math.modf(h_angle/30)[1]
-        true_mins = math.modf(m_angle/6)[1]
-        true_preds.append([true_hour, true_mins])
-    return torch.FloatTensor(true_preds)
-
-def save_train_plot(train_loss, eval_loss, plot_name):
-    """ Function to plot the losses during training and 
-        save the figure.
-    """
-    plt.plot(train_loss, label="train")
-    plt.plot(eval_loss, label="evaluate")
-    plt.xlabel("epochs")
-    plt.ylabel("loss")
-    plt.legend()
-    plt.savefig("train_plots/"+plot_name+".png")
 
 if __name__ == "__main__":
     main()

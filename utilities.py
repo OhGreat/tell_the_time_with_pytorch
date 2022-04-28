@@ -44,8 +44,6 @@ def transform_labels(labels):
     labels_df['m_sin'] = np.sin(2 * np.pi * labels_df["minute"] / labels_df["minute"].max())
     return torch.FloatTensor(labels_df.to_numpy())
 
-
-
 def train(dataloader, model, loss_fn, optimizer, device):
     """ Applies backpropagation to train the model
     """
@@ -78,7 +76,6 @@ def evaluate(dataloader, model, loss_fn, device):
             losses.append(loss)
     losses = torch.FloatTensor(losses)
     return losses
-
 
 def predict(dataloader, model, loss_fn, device):
     """ Returns predictions for the data in the DataLoader 
@@ -130,4 +127,5 @@ def save_train_plot(train_loss, eval_loss, plot_name):
     plt.xlabel("epochs")
     plt.ylabel("loss")
     plt.legend()
+    plt.title(plot_name)
     plt.savefig("train_plots/"+plot_name+".png")
