@@ -1,6 +1,8 @@
+from ast import parse
 import numpy as np
 import torch
 import time
+import argparse
 from torch import nn
 from torch.utils.data import DataLoader, random_split
 from classes.ClockDataset import ClockDataset
@@ -9,18 +11,54 @@ from classes.Models import *
 from utilities import *
 
 def main():
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-mode', action='store', 
+                        dest='mode', type=str,
+                        default='periodic_labels')
+    parser.add_argument('-data_splits', action='store',
+                        dest='data_splits', type=int,
+                        nargs='+', default=[16500,1000,500])
+    parser.add_argument('-bs', action='store', 
+                        dest='batch_size', type=int,
+                        default=64)
+    parser.add_argument('-lr', action='store', 
+                        dest='learning_rate', type=float,
+                        default=1e-4)
+    parser.add_argument('-epochs', action='store',
+                        dest='epochs', type=int,
+                        default=100)
+    parser.add_argument('-patience', action='store',
+                        dest='patience', type=int,
+                        default=10)
+    parser.add_argument('-weights_name', action='store',
+                        dest='weights_name', type=str,
+                        default=None)
+    parser.add_argument('-save_plots', action='store_true',
+                        help="Boolean value. Saves plots when used")
+    parser.add_argument('-v', action='store',
+                        dest='verbose', type=int,
+                        default=1, help="Defines terminal prints intensity. Should be 0,1 or 2.")
+    args = parser.parse_args()
+    print(args)
+
+
+
+
     # main modality
-    mode = "cse_loss" #periodic_labelscse_loss
+    mode = args.mode #periodic_labelscse_loss
     periodic_labels = True if mode == "periodic_labels" else False
+
     # data parameters
-    data_splits = [16500,1000,500]
-    batch_size = 64
+    batch_size = args.batch_size
     input_channels = 1
     img_height = 150
     img_width = 150
+    data_splits = args.data_splits  # total must be 180000
+
     # model parameters
-    n_outputs = 4 if periodic_labels else 2 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    n_outputs = 4 if periodic_labels else 2 
     if mode == "periodic_labels":
         model = NN_regression(  input_channels=input_channels,
                                 h=img_height,w=img_width,
@@ -34,14 +72,14 @@ def main():
     else:
         print("Please choose a correct mode.")
         exit()
-    learning_rate = 1e-4
+    learning_rate = args.learning_rate
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    save_weights = "cse_loss"
-    save_losses = True
-    epochs = 10
-    patience = 10
+    epochs = args.epochs
+    patience = args.patience
     # extra parameters
-    verbose = 2
+    weights_name = args.weights_name
+    save_plots = args.save_plots
+    verbose = args.verbose
 
     if verbose > 0:
         print(f"Running pytorch on {device} device.\n")
@@ -97,10 +135,10 @@ def main():
         print(f"Test avg loss: {eval_mean:>8f}")
 
         # Save new weights if they are better
-        if (save_weights != None) and (eval_mean < mean_test_loss):
+        if (weights_name != None) and (eval_mean < mean_test_loss):
             print("Found new best weights.")
             mean_test_loss = eval_mean
-            torch.save(model.state_dict(), "model_weights/"+save_weights)
+            torch.save(model.state_dict(), "model_weights/"+weights_name)
             curr_patience = 0
         print()
 
@@ -128,10 +166,10 @@ def main():
         print(f"Common sense error on test dataset: {np.round(cse_error.numpy(),3)}")
 
     # create and save training plots
-    if save_losses:
+    if save_plots:
         train_losses = np.vstack(train_losses)
         test_losses = np.vstack(eval_losses)
-        save_train_plot(train_losses, test_losses, save_weights)
+        save_train_plot(train_losses, test_losses, weights_name)
 
 if __name__ == "__main__":
     main()

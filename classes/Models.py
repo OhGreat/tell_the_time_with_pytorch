@@ -30,7 +30,7 @@ class NN_regression(nn.Module):
             nn.Linear(512, 256),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(256, n_outputs)     
+            nn.Linear(256, n_outputs) 
         )
 
     def forward(self, x):
