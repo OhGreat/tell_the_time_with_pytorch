@@ -44,13 +44,16 @@ def transform_labels(labels):
     labels_df['m_sin'] = np.sin(2 * np.pi * labels_df["minute"] / labels_df["minute"].max())
     return torch.FloatTensor(labels_df.to_numpy())
 
-def train(dataloader, model, loss_fn, optimizer, device):
+def train(dataloader, model, loss_fn, optimizer, device, periodic_labels=False):
     """ Applies backpropagation to train the model
     """
     losses = []
     model.train()
     for X, y in dataloader:
-        X, y = X.to(device), y[:, 2:].to(device)
+        if periodic_labels:
+            X, y = X.to(device), y[:, 2:].to(device)
+        else:
+            X, y = X.to(device), y.to(device)
         # Compute prediction error
         pred = model(X)
         loss = loss_fn(pred, y)
@@ -62,7 +65,7 @@ def train(dataloader, model, loss_fn, optimizer, device):
     losses = torch.FloatTensor(losses)
     return losses
 
-def evaluate(dataloader, model, loss_fn, device):
+def evaluate(dataloader, model, loss_fn, device, periodic_labels=False):
     """ Used to evaluate the model on unknown data
         during training 
     """
@@ -70,14 +73,17 @@ def evaluate(dataloader, model, loss_fn, device):
     losses = []
     with torch.no_grad():
         for X, y in dataloader:
-            X, y = X.to(device), y[:, 2:].to(device)
+            if periodic_labels:
+                X, y = X.to(device), y[:, 2:].to(device)
+            else:
+                X, y = X.to(device), y.to(device)
             pred = model(X)
             loss = loss_fn(pred, y)
             losses.append(loss)
     losses = torch.FloatTensor(losses)
     return losses
 
-def predict(dataloader, model, loss_fn, device):
+def predict(dataloader, model, loss_fn, device, periodic_labels=False):
     """ Returns predictions for the data in the DataLoader 
         as one single batch.
     """
@@ -86,7 +92,10 @@ def predict(dataloader, model, loss_fn, device):
     model.eval()
     with torch.no_grad():
         for X, y in dataloader:
-            X, y = X.to(device), y[:,2:].to(device)
+            if periodic_labels:
+                X, y = X.to(device), y[:, 2:].to(device)
+            else:
+                X, y = X.to(device), y.to(device)
             pred = model(X)
             predictions.append(pred.cpu().numpy())
             loss = loss_fn(pred, y)
@@ -95,8 +104,9 @@ def predict(dataloader, model, loss_fn, device):
     print(f"Avg evaluation loss: {torch.mean(losses):>8f} \n")
     # Normalize values bigger/smaller than the max/min possible
     predictions  = np.vstack(predictions)
-    predictions[ predictions > 1 ] = 1
-    predictions[ predictions < -1 ] = -1
+    if periodic_labels:
+        predictions[ predictions > 1 ] = 1
+        predictions[ predictions < -1 ] = -1
     return predictions
 
 def denormalize_time(predictions):

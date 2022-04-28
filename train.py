@@ -5,12 +5,13 @@ from torch import nn
 from torch.utils.data import DataLoader, random_split
 from classes.ClockDataset import ClockDataset
 from classes.CommonSenseError import CommonSenseError
-from classes.Models import NN_regression
+from classes.Models import *
 from utilities import *
 
 def main():
     # main modality
-    mode = "periodic_labels"
+    mode = "cse_loss" #periodic_labelscse_loss
+    periodic_labels = True if mode == "periodic_labels" else False
     # data parameters
     data_splits = [16500,1000,500]
     batch_size = 64
@@ -18,21 +19,26 @@ def main():
     img_height = 150
     img_width = 150
     # model parameters
-    n_outputs = 4
+    n_outputs = 4 if periodic_labels else 2 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = NN_regression(  input_channels=input_channels,
-                            h=img_height,w=img_width,
-                            n_outputs=n_outputs).to(device)
     if mode == "periodic_labels":
+        model = NN_regression(  input_channels=input_channels,
+                                h=img_height,w=img_width,
+                                n_outputs=n_outputs).to(device)
         loss = nn.MSELoss()
+    elif mode == "cse_loss":
+        model = NN_regression(  input_channels=input_channels,
+                                h=img_height,w=img_width,
+                                n_outputs=n_outputs).to(device)
+        loss = CommonSenseError()
     else:
         print("Please choose a correct mode.")
         exit()
     learning_rate = 1e-4
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    save_weights = "test"
+    save_weights = "cse_loss"
     save_losses = True
-    epochs = 150
+    epochs = 10
     patience = 10
     # extra parameters
     verbose = 2
@@ -46,7 +52,7 @@ def main():
         print(f"data shape: {data.shape}, labels shape: {labels.shape}")
 
     # Transform labels to periodic values if needed.
-    if mode == "periodic_labels":
+    if periodic_labels:
         labels = transform_labels(labels)
 
     # Create main dataset
@@ -79,13 +85,13 @@ def main():
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         # Training step
-        train_l = train(train_data_loader, model, loss, optimizer, device)
+        train_l = train(train_data_loader, model, loss, optimizer, device, periodic_labels)
         train_mean = torch.mean(train_l)
         train_losses.append(train_mean)
         print(f"Train loss: {train_mean:>7f}")
 
         # Evaluation step
-        eval_l = evaluate(val_data_loader, model, loss, device)
+        eval_l = evaluate(val_data_loader, model, loss, device, periodic_labels)
         eval_mean = torch.mean(eval_l)
         eval_losses.append(eval_mean)
         print(f"Test avg loss: {eval_mean:>8f}")
@@ -105,16 +111,21 @@ def main():
         curr_patience += 1
 
     end_time = time.time()
-    print(f"Training finished in {end_time-start_time} seconds.")
+    print(f"Training finished in {np.round(end_time-start_time, 3)} seconds.")
 
     # make predictions on test dataset
-    predictions = predict(test_data_loader, model, loss, device)
-    # transform cosine and sine back to integer values
-    true_preds = denormalize_time(predictions)
-    # calculate and print common sense error
-    cse = CommonSenseError()
-    cse_error = cse(torch.FloatTensor(true_preds),torch.FloatTensor(targets[:,:2]))
-    print(f"Common sense error on test dataset: {np.round(cse_error.numpy(),3)}")
+    predictions = predict(test_data_loader, model, loss, device, periodic_labels)
+    if periodic_labels:
+        # transform cosine and sine back to integer values
+        true_preds = denormalize_time(predictions)
+        # calculate and print common sense error
+        cse = CommonSenseError()
+        cse_error = cse(torch.FloatTensor(true_preds),torch.FloatTensor(targets[:,:2]))
+        print(f"Common sense error on test dataset: {np.round(cse_error.numpy(),3)}")
+    else:
+        cse = CommonSenseError()
+        cse_error = cse(torch.FloatTensor(predictions),torch.FloatTensor(targets))
+        print(f"Common sense error on test dataset: {np.round(cse_error.numpy(),3)}")
 
     # create and save training plots
     if save_losses:
