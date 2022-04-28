@@ -24,4 +24,25 @@ To use the repository and run the available scripts, `Python3` ned to be install
 
 ## Usage
 
+Two main python scripts are available in the main directory. `train.py` used for training and `evaluate.py` used to evaluate your trained model weights. Example shell scripts are also available .
+
+The script `train.py` accepts the following arguments:
+- `-mode` : defines the problem resolution method. Can be set to *periodic_labels* to use the label tranformation approach, or to *cse_loss* to use the custom common sense error loss.
+- `-data_splits` : defines the split sizes for train, test and evaluation set.
+- `-bs` : defines the batch size.
+- `-lr`: defines the learning rate of the optimizer.
+- `-epochs` : defines the maximum number of epochs to train the model.
+- `-patience` : defines the number of iterations to wait before stopping the training process, if no new best weights are found.
+- `-weights_name` : defines the name of the saved weights.
+- `-save_plots` : Boolean value. training plots will be saved when used.
+- `-v` : defines the debug prints intensity. Should be 0, 1 or 2.
+
+
+TODO: describe `evaluate.py`.
+
 ## Results and observations
+
+The periodic encoded label configuration worked very well and reaches a common sense error on the test set of around 11 minutes.
+The training is also very smooth as we can see from the image below, concluding that this approach is very well suited for the task at hand.
+
+<img src="https://github.com/OhGreat/tell_the_time_NN/tree/main/readme_aux/periodic_labels_losses.png"></img>
