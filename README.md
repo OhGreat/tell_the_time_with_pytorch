@@ -42,7 +42,13 @@ TODO: describe `evaluate.py`.
 
 ## Results and observations
 
-The periodic encoded label configuration worked well and reached a common sense error on the test set of around 12 minutes.
+The periodic encoded label configuration worked as expected and reached a mean error on the test set of around 12 minutes.
 The training is also very smooth as we can see from the image below, concluding that this approach is very well suited for the task at hand.
 
 <img src="https://github.com/OhGreat/tell_the_time_NN/blob/main/readme_aux/periodic_labels_losses.png"></img>
+
+## TODO
+
+- fix custom loss approach
+- fix custom loss notebook
+- add args parser in evaluate script
