@@ -12,6 +12,7 @@ def main():
     weights_path = 'model_weights/periodic_labels_2'
     batch_size=64
     approach = "periodic_labels"
+    data_dir = "data"
 
     # load model and weights
     n_outputs = 4 if approach == "periodic_labels" else 2 
@@ -27,7 +28,7 @@ def main():
         loss = CommonSenseError()
 
     # load data and create dataset
-    data, labels = load_data()
+    data, labels = load_data(data_dir)
     if approach == "periodic_labels":
         labels = transform_labels(labels)
     clock_dataset = ClockDataset(data, labels)

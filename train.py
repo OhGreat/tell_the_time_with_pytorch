@@ -15,6 +15,9 @@ def main():
     parser.add_argument('-approach', action='store', 
                         dest='approach', type=str,
                         default='periodic_labels')
+    parser.add_argument('-data_dir', action='store', 
+                        dest='data_dir', type=str,
+                        default='data')
     parser.add_argument('-data_splits', action='store',
                         dest='data_splits', type=int,
                         nargs='+', default=[16500,1000,500])
@@ -46,6 +49,7 @@ def main():
     periodic_labels = True if approach == "periodic_labels" else False
 
     # data parameters
+    data_dir = args.data_dir
     batch_size = args.batch_size
     input_channels = 1
     img_height = 150
@@ -81,7 +85,7 @@ def main():
         print(f"Running pytorch on {device} device.\n")
 
     # Load data
-    data, labels = load_data()
+    data, labels = load_data(data_dir)
     if verbose > 0:
         print(f"data shape: {data.shape}, labels shape: {labels.shape}")
 
@@ -97,17 +101,18 @@ def main():
     train_data_loader = DataLoader(train_data, batch_size=batch_size)
     val_data_loader = DataLoader(val_data, batch_size=batch_size)
     test_data_loader = DataLoader(test_data, batch_size=batch_size)
+    if verbose > 1:
+        for X, y in train_data_loader:
+            print(f"Shape of data batch [N, C, H, W]: {X.shape}")
+            print(f"Shape of target batch: {y.shape}")
+            break
 
     # Prepare target array to use for evaluation
     targets = []
     for i in range(len(test_data)):
         targets.append(test_data[i][1])
     targets = np.vstack(targets)
-    if verbose > 1:
-        for X, y in train_data_loader:
-            print(f"Shape of data batch [N, C, H, W]: {X.shape}")
-            print(f"Shape of target batch: {y.shape}")
-            break
+    
 
     # Main training loop
     curr_patience = 0
@@ -150,11 +155,11 @@ def main():
     # make predictions on test dataset
     predictions = predict(test_data_loader, model, loss, device, approach)
 
+    # calculate and print common sense error
     cse = CommonSenseError()
     if periodic_labels:
         # transform cosine and sine back to integer values
         true_preds = denormalize_time(predictions)
-        # calculate and print common sense error
         cse_error = cse(torch.FloatTensor(true_preds),torch.FloatTensor(targets[:,:2]))
     else:
         cse_error = cse(torch.FloatTensor(predictions),torch.FloatTensor(targets))

@@ -4,29 +4,29 @@ import torch
 import math
 import matplotlib.pyplot as plt
 
-def load_data():
+def load_data(dir_path):
     """ Returns the data and labels as pytorch tensors.
     """
-    data = np.load("data/data_1.npy")
-    labels = np.load("data/labels_1.npy")
+    data = np.load(dir_path+"/data_1.npy")
+    labels = np.load(dir_path+"/labels_1.npy")
 
-    data = np.vstack((data,np.load("data/data_2.npy")))
-    labels = np.vstack((labels,np.load("data/labels_2.npy")))
+    data = np.vstack((data,np.load(dir_path+"/data_2.npy")))
+    labels = np.vstack((labels,np.load(dir_path+"/labels_2.npy")))
 
-    data = np.vstack((data,np.load("data/data_3.npy")))
-    labels = np.vstack((labels,np.load("data/labels_3.npy")))
+    data = np.vstack((data,np.load(dir_path+"/data_3.npy")))
+    labels = np.vstack((labels,np.load(dir_path+"/labels_3.npy")))
 
-    data = np.vstack((data,np.load("data/data_4.npy")))
-    labels = np.vstack((labels,np.load("data/labels_4.npy")))
+    data = np.vstack((data,np.load(dir_path+"/data_4.npy")))
+    labels = np.vstack((labels,np.load(dir_path+"/labels_4.npy")))
 
-    data = np.vstack((data,np.load("data/data_5.npy")))
-    labels = np.vstack((labels,np.load("data/labels_5.npy")))
+    data = np.vstack((data,np.load(dir_path+"/data_5.npy")))
+    labels = np.vstack((labels,np.load(dir_path+"/labels_5.npy")))
 
     #data = np.load("data/images.npy")
     data = torch.FloatTensor(np.expand_dims(data,axis=1))/255.
     data_permuts = torch.randperm(data.shape[0])
     data = data[data_permuts,:]
-    labels = torch.FloatTensor(np.load("data/labels.npy"))
+    labels = torch.FloatTensor(np.load(dir_path+"/labels.npy"))
     labels = labels[data_permuts,:]
 
     return data, labels

@@ -24,7 +24,7 @@ To use the repository and run the available scripts, `Python3` needs to be insta
 
 ## Usage
 
-Two main python scripts are available in the main directory. `train.py` is used for training and `evaluate.py` which is used to evaluate your trained model weights. Example shell scripts are also available in the `example_scripts` directory.
+Two main python scripts are available in the main directory. `train.py` that is used for training and `evaluate.py` which is used to evaluate trained models. Shell scripts for setting parameters on the main python scripts can be found in the `example_scripts` directory. In addition, jupyter notebooks for training and evaluationg models are available in the `notebooks` directory. 
 
 The script `train.py` accepts the following arguments:
 - `-mode` : defines the problem resolution method. Can be set to *'periodic_labels'* to use the label tranformation approach, or to *'cse_loss'* to use the custom common sense error loss.
@@ -42,7 +42,7 @@ TODO: describe `evaluate.py`.
 
 ## Results and observations
 
-The periodic encoded label configuration worked very well and reaches a common sense error on the test set of around 11 minutes.
+The periodic encoded label configuration worked well and reached a common sense error on the test set of around 12 minutes.
 The training is also very smooth as we can see from the image below, concluding that this approach is very well suited for the task at hand.
 
 <img src="https://github.com/OhGreat/tell_the_time_NN/blob/main/readme_aux/periodic_labels_losses.png"></img>
