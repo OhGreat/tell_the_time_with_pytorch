@@ -37,7 +37,6 @@ The script `train.py` accepts the following arguments:
 - `-save_plots` : Boolean value. training plots will be saved when used.
 - `-v` : defines the debug prints intensity. Should be 0, 1 or 2.
 
-
 TODO: describe `evaluate.py`.
 
 ## Results and observations
