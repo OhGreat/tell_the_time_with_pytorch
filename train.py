@@ -1,4 +1,3 @@
-from ast import parse
 import numpy as np
 import torch
 import time
@@ -13,8 +12,8 @@ from utilities import *
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-mode', action='store', 
-                        dest='mode', type=str,
+    parser.add_argument('-approach', action='store', 
+                        dest='approach', type=str,
                         default='periodic_labels')
     parser.add_argument('-data_splits', action='store',
                         dest='data_splits', type=int,
@@ -42,12 +41,9 @@ def main():
     args = parser.parse_args()
     print(args)
 
-
-
-
-    # main modality
-    mode = args.mode #periodic_labelscse_loss
-    periodic_labels = True if mode == "periodic_labels" else False
+    # main approach
+    approach = args.approach #periodic_labelscse_loss
+    periodic_labels = True if approach == "periodic_labels" else False
 
     # data parameters
     batch_size = args.batch_size
@@ -59,12 +55,12 @@ def main():
     # model parameters
     device = "cuda" if torch.cuda.is_available() else "cpu"
     n_outputs = 4 if periodic_labels else 2 
-    if mode == "periodic_labels":
+    if approach == "periodic_labels":
         model = NN_regression(  input_channels=input_channels,
                                 h=img_height,w=img_width,
                                 n_outputs=n_outputs).to(device)
         loss = nn.MSELoss()
-    elif mode == "cse_loss":
+    elif approach == "cse_loss":
         model = NN_regression(  input_channels=input_channels,
                                 h=img_height,w=img_width,
                                 n_outputs=n_outputs).to(device)
@@ -123,13 +119,13 @@ def main():
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         # Training step
-        train_l = train(train_data_loader, model, loss, optimizer, device, periodic_labels)
+        train_l = train(train_data_loader, model, loss, optimizer, device, approach)
         train_mean = torch.mean(train_l)
         train_losses.append(train_mean)
         print(f"Train loss: {train_mean:>7f}")
 
         # Evaluation step
-        eval_l = evaluate(val_data_loader, model, loss, device, periodic_labels)
+        eval_l = evaluate(val_data_loader, model, loss, device, approach)
         eval_mean = torch.mean(eval_l)
         eval_losses.append(eval_mean)
         print(f"Test avg loss: {eval_mean:>8f}")
@@ -152,18 +148,17 @@ def main():
     print(f"Training finished in {np.round(end_time-start_time, 3)} seconds.")
 
     # make predictions on test dataset
-    predictions = predict(test_data_loader, model, loss, device, periodic_labels)
+    predictions = predict(test_data_loader, model, loss, device, approach)
+
+    cse = CommonSenseError()
     if periodic_labels:
         # transform cosine and sine back to integer values
         true_preds = denormalize_time(predictions)
         # calculate and print common sense error
-        cse = CommonSenseError()
         cse_error = cse(torch.FloatTensor(true_preds),torch.FloatTensor(targets[:,:2]))
-        print(f"Common sense error on test dataset: {np.round(cse_error.numpy(),3)}")
     else:
-        cse = CommonSenseError()
         cse_error = cse(torch.FloatTensor(predictions),torch.FloatTensor(targets))
-        print(f"Common sense error on test dataset: {np.round(cse_error.numpy(),3)}")
+    print(f"Common sense error on test dataset: {np.round(cse_error.numpy(),3)}")
 
     # create and save training plots
     if save_plots:

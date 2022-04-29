@@ -44,13 +44,15 @@ def transform_labels(labels):
     labels_df['m_sin'] = np.sin(2 * np.pi * labels_df["minute"] / labels_df["minute"].max())
     return torch.FloatTensor(labels_df.to_numpy())
 
-def train(dataloader, model, loss_fn, optimizer, device, periodic_labels=False):
-    """ Applies backpropagation to train the model
+def train(dataloader, model, loss_fn, optimizer, device, approach=False):
+    """ Applies backpropagation to train the model.
     """
     losses = []
     model.train()
     for X, y in dataloader:
-        if periodic_labels:
+        if approach == "periodic_labels":
+            # we need ignore the first two columns
+            # that hold the normal labels
             X, y = X.to(device), y[:, 2:].to(device)
         else:
             X, y = X.to(device), y.to(device)
@@ -65,15 +67,17 @@ def train(dataloader, model, loss_fn, optimizer, device, periodic_labels=False):
     losses = torch.FloatTensor(losses)
     return losses
 
-def evaluate(dataloader, model, loss_fn, device, periodic_labels=False):
+def evaluate(dataloader, model, loss_fn, device, approach=False):
     """ Used to evaluate the model on unknown data
-        during training 
+        during training.
     """
     model.eval()
     losses = []
     with torch.no_grad():
         for X, y in dataloader:
-            if periodic_labels:
+            if approach == "periodic_labels": 
+                # we need ignore the first two columns
+                # that hold the normal labels
                 X, y = X.to(device), y[:, 2:].to(device)
             else:
                 X, y = X.to(device), y.to(device)
@@ -83,8 +87,8 @@ def evaluate(dataloader, model, loss_fn, device, periodic_labels=False):
     losses = torch.FloatTensor(losses)
     return losses
 
-def predict(dataloader, model, loss_fn, device, periodic_labels=False):
-    """ Returns predictions for the data in the DataLoader 
+def predict(dataloader, model, loss_fn, device, approach=False):
+    """ Returns predictions for the data in the DataLoader
         as one single batch.
     """
     losses = []
@@ -92,7 +96,9 @@ def predict(dataloader, model, loss_fn, device, periodic_labels=False):
     model.eval()
     with torch.no_grad():
         for X, y in dataloader:
-            if periodic_labels:
+            if approach == "periodic_labels":
+                # we need ignore the first two columns
+                # that hold the normal labels
                 X, y = X.to(device), y[:, 2:].to(device)
             else:
                 X, y = X.to(device), y.to(device)
@@ -104,7 +110,7 @@ def predict(dataloader, model, loss_fn, device, periodic_labels=False):
     print(f"Avg evaluation loss: {torch.mean(losses):>8f} \n")
     # Normalize values bigger/smaller than the max/min possible
     predictions  = np.vstack(predictions)
-    if periodic_labels:
+    if approach:
         predictions[ predictions > 1 ] = 1
         predictions[ predictions < -1 ] = -1
     return predictions
