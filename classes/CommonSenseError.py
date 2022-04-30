@@ -7,7 +7,7 @@ class CommonSenseError(nn.Module):
 
     def forward(self, prediction, target):
         # hour common sense error in minutes
-        preds = torch.floor(prediction.T)
+        preds = prediction.T
         labels = target.T
         hour_start_idx = torch.minimum(preds[0], labels[0])
         hour_end_idx = torch.maximum(preds[0], labels[0])
@@ -23,4 +23,4 @@ class CommonSenseError(nn.Module):
         mins_dist = torch.minimum(mins_dist_1, mins_dist_2)
 
         # return total common sense error in minutes
-        return torch.mean(hour_dist + mins_dist)
+        return torch.mean(torch.abs(hour_dist + mins_dist))

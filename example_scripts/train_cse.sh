@@ -1,12 +1,11 @@
 #/bin/bash
 
 python train.py \
--mode "cse_loss" \
--data_splits 16500 1000 500 \
+-approach "cse_loss" \
 -bs 64 \
--lr 1e-4 \
--epochs 100 \
+-lr 1e-5 \
+-epochs 150 \
 -patience 10 \
--weights_name "temp_weights" \
+-weights_name "CSE loss" \
 -save_plots \
--v 1 
+-v 1

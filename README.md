@@ -1,10 +1,11 @@
 # Tell the time with pytorch
 
-<img src="https://github.com/OhGreat/tell_the_time_NN/blob/main/readme_aux/example_img.png"></img>
 
 This repository is an extract of an assignment from the Computer Science Master's course at Leiden University. It contains a framework used to train and evaluate neural networks on an image dataset of analog clocks. The purpose of this assignment was to tackle the periodic property of time, which would negatively affect the training of our model, if not handled correctly. Details on how this problem was tackled are present in the next section of this document. Pretrained models are also provided to complement the results of our experiments.
 
 ## Dataset 
+
+<img src="https://github.com/OhGreat/tell_the_time_NN/blob/main/readme_aux/example_img.png"></img>
 
 The dataset used for our experiments consists of 18.000 grayscale images of analog clocks in different positions, angles and orientations. The shape of each image is (150,150) and are saved as a numpy arrays in the `data` directory, together with the labels. The labels are also a numpy array of shape (18.000, 2), where for each image we have a target value for hours and minutes. A sample of the dataset can be viewed in the image provided above.
 
@@ -27,7 +28,7 @@ To use the repository and run the available scripts, `Python3` needs to be insta
 Two main python scripts are available in the main directory. `train.py` that is used for training and `evaluate.py` which is used to evaluate trained models. Shell scripts for setting parameters on the main python scripts can be found in the `example_scripts` directory. In addition, jupyter notebooks for training and evaluationg models are available in the `notebooks` directory. 
 
 The script `train.py` accepts the following arguments:
-- `-mode` : defines the problem resolution method. Can be set to *'periodic_labels'* to use the label tranformation approach, or to *'cse_loss'* to use the custom common sense error loss.
+- `-approach` : defines the problem resolution method. Can be set to *'periodic_labels'* to use the label tranformation approach, or to *'cse_loss'* to use the custom common sense error loss.
 - `-data_splits` : defines the split sizes for train, test and evaluation set.
 - `-bs` : defines the batch size.
 - `-lr`: defines the learning rate of the optimizer used for training.
@@ -36,6 +37,16 @@ The script `train.py` accepts the following arguments:
 - `-weights_name` : defines the name of the saved weights.
 - `-save_plots` : Boolean value. training plots will be saved when used.
 - `-v` : defines the debug prints intensity. Should be 0, 1 or 2.
+
+To train a network periodic-labelled approach, run the following script from the main directory:
+```
+python train.py -approach "periodic_labels" -weights_name "example_periodic" -v 1
+```
+
+To train a network with the custom minutes loss approach, run the following script from the main directory:
+```
+python train.py -approach "cse_loss" -lr 1e-5 -weights_name "example_cse" -v 1
+```
 
 TODO: describe `evaluate.py`.
 
@@ -48,6 +59,6 @@ The training is also very smooth as we can see from the image below, concluding 
 
 ## TODO
 
-- fix custom loss approach
+- ~~fix custom loss approach~~
 - fix custom loss notebook
 - add args parser in evaluate script

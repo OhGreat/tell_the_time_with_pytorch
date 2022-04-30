@@ -5,7 +5,7 @@ import argparse
 from torch import nn
 from torch.utils.data import DataLoader, random_split
 from classes.ClockDataset import ClockDataset
-from classes.CommonSenseError import CommonSenseError
+from classes.CommonSenseError import *
 from classes.Models import *
 from utilities import *
 
@@ -42,7 +42,10 @@ def main():
                         dest='verbose', type=int,
                         default=1, help="Defines terminal prints intensity. Should be 0,1 or 2.")
     args = parser.parse_args()
-    print(args)
+    if args.verbose > 0:
+        print()
+        print("Arguments:")
+        print(args)
 
     # main approach
     approach = args.approach #periodic_labelscse_loss
@@ -58,16 +61,13 @@ def main():
 
     # model parameters
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    n_outputs = 4 if periodic_labels else 2 
-    if approach == "periodic_labels":
-        model = NN_regression(  input_channels=input_channels,
+    n_outputs = 4 if periodic_labels else 2
+    model = NN_regression(  input_channels=input_channels,
                                 h=img_height,w=img_width,
                                 n_outputs=n_outputs).to(device)
+    if approach == "periodic_labels":
         loss = nn.MSELoss()
     elif approach == "cse_loss":
-        model = NN_regression(  input_channels=input_channels,
-                                h=img_height,w=img_width,
-                                n_outputs=n_outputs).to(device)
         loss = CommonSenseError()
     else:
         print("Please choose a correct mode.")
@@ -101,7 +101,7 @@ def main():
     train_data_loader = DataLoader(train_data, batch_size=batch_size)
     val_data_loader = DataLoader(val_data, batch_size=batch_size)
     test_data_loader = DataLoader(test_data, batch_size=batch_size)
-    if verbose > 1:
+    if verbose > 0:
         for X, y in train_data_loader:
             print(f"Shape of data batch [N, C, H, W]: {X.shape}")
             print(f"Shape of target batch: {y.shape}")
@@ -137,7 +137,7 @@ def main():
 
         # Save new weights if they are better
         if (weights_name != None) and (eval_mean < mean_test_loss):
-            print("Found new best weights.")
+            print("Saving new best weights.")
             mean_test_loss = eval_mean
             torch.save(model.state_dict(), "model_weights/"+weights_name)
             curr_patience = 0
@@ -147,7 +147,7 @@ def main():
         if curr_patience >= patience:
             print(f"No new best weights found after {patience} iterations.")
             break
-        curr_patience += 1
+        curr_patience += 1  # increment patience if new best not found
 
     end_time = time.time()
     print(f"Training finished in {np.round(end_time-start_time, 3)} seconds.")
@@ -167,6 +167,8 @@ def main():
 
     # create and save training plots
     if save_plots:
+        if weights_name == None:  # make sure we have a name for thet plots
+            weights_name = approach
         train_losses = np.vstack(train_losses)
         test_losses = np.vstack(eval_losses)
         save_train_plot(train_losses, test_losses, weights_name)
