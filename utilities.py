@@ -79,9 +79,10 @@ def evaluate(dataloader, model, loss_fn, device, approach=False):
                 # we need ignore the first two columns
                 # that hold the normal labels
                 X, y = X.to(device), y[:, 2:].to(device)
+                pred = model(X)
             else:
                 X, y = X.to(device), y.to(device)
-            pred = model(X)
+                pred = torch.trunc(model(X))
             loss = loss_fn(pred, y)
             losses.append(loss)
     losses = torch.FloatTensor(losses)
@@ -100,19 +101,21 @@ def predict(dataloader, model, loss_fn, device, approach=False):
                 # we need ignore the first two columns
                 # that hold the normal labels
                 X, y = X.to(device), y[:, 2:].to(device)
+                pred = model(X)
             else:
                 X, y = X.to(device), y.to(device)
-            pred = model(X)
+                pred = torch.trunc(model(X))
             predictions.append(pred.cpu().numpy())
             loss = loss_fn(pred, y)
             losses.append(loss)
     losses = torch.FloatTensor(losses)
-    print(f"Avg evaluation loss: {torch.mean(losses):>8f} \n")
+    print(f"Avg evaluation loss of best weights: {torch.mean(losses):>8f} \n")
     # Normalize values bigger/smaller than the max/min possible
     predictions  = np.vstack(predictions)
-    if approach:
+    if approach == "periodic_labels":
         predictions[ predictions > 1 ] = 1
         predictions[ predictions < -1 ] = -1
+        predictions = denormalize_time(predictions)
     return predictions
 
 def denormalize_time(predictions):

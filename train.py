@@ -65,9 +65,9 @@ def main():
     model = NN_regression(  input_channels=input_channels,
                                 h=img_height,w=img_width,
                                 n_outputs=n_outputs).to(device)
-    if approach == "periodic_labels":
+    if approach == "periodic_labels" or approach == "baseline":
         loss = nn.MSELoss()
-    elif approach == "cse_loss":
+    elif approach == "minute_distance":
         loss = CommonSenseError()
     else:
         print("Please choose a correct mode.")
@@ -94,7 +94,7 @@ def main():
         labels = transform_labels(labels)
 
     # Create main dataset
-    clock_dataset = ClockDataset(data, labels)
+    clock_dataset = ClockDataset(data, labels, transform=True)
     # Split dataset into train, test and validation sets
     train_data, val_data, test_data = random_split(clock_dataset, data_splits)
     # Create data loaders
@@ -113,7 +113,6 @@ def main():
         targets.append(test_data[i][1])
     targets = np.vstack(targets)
     
-
     # Main training loop
     curr_patience = 0
     train_losses = []
@@ -127,13 +126,13 @@ def main():
         train_l = train(train_data_loader, model, loss, optimizer, device, approach)
         train_mean = torch.mean(train_l)
         train_losses.append(train_mean)
-        print(f"Train loss: {train_mean:>7f}")
+        print(f"Training loss: {train_mean:>7f}")
 
         # Evaluation step
         eval_l = evaluate(val_data_loader, model, loss, device, approach)
         eval_mean = torch.mean(eval_l)
         eval_losses.append(eval_mean)
-        print(f"Test avg loss: {eval_mean:>8f}")
+        print(f"Evaluation loss: {eval_mean:>8f}")
 
         # Save new weights if they are better
         if (weights_name != None) and (eval_mean < mean_test_loss):
@@ -159,11 +158,12 @@ def main():
     cse = CommonSenseError()
     if periodic_labels:
         # transform cosine and sine back to integer values
-        true_preds = denormalize_time(predictions)
-        cse_error = cse(torch.FloatTensor(true_preds),torch.FloatTensor(targets[:,:2]))
+        cse_error = cse.minutes_loss(torch.FloatTensor(predictions),
+                                    torch.FloatTensor(targets[:,:2]))
     else:
-        cse_error = cse(torch.FloatTensor(predictions),torch.FloatTensor(targets))
-    print(f"Common sense error on test dataset: {np.round(cse_error.numpy(),3)}")
+        cse_error = cse.minutes_loss(torch.FloatTensor(predictions),
+                                    torch.FloatTensor(targets))
+    print(f"Mean minute distance loss for the test dataset: {np.round(cse_error.numpy(),3)}")
 
     # create and save training plots
     if save_plots:
