@@ -15,14 +15,14 @@ class ClockDataset(Dataset):
 
         if self.transform:
             ra = T.RandomApply(torch.nn.ModuleList([
-                T.GaussianBlur(kernel_size=(5, 9), sigma=(0.2, 2))
+                T.GaussianBlur(kernel_size=(5, 9), sigma=(0.01, 5))
             ]), p=0.3)
-            rp = T.RandomPerspective(0.3, p=0.3)
+            re = T.RandomErasing(p=0.5, scale=(0.05, 0.2), ratio=(0.2, 3.5))
             rr = T.RandomRotation(degrees=(0,360), expand=True)
-            re = T.RandomErasing(p=0.6, scale=(0.05, 0.25), ratio=(0.2, 3.5))
+            rp = T.RandomPerspective(0.05, p=0.5)
             rs = T.Resize(150)
 
-            composed = T.Compose([ra,rp,rr,re,rs])
+            composed = T.Compose([ra,re,rr,rp,rs])
             x = composed(x)
 
         return x, y

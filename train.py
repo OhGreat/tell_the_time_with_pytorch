@@ -5,7 +5,7 @@ import argparse
 from torch import nn
 from torch.utils.data import DataLoader, random_split
 from classes.ClockDataset import ClockDataset
-from classes.CommonSenseError import *
+from classes.MinutesDistance import *
 from classes.Models import *
 from utilities import *
 
@@ -62,13 +62,13 @@ def main():
     # model parameters
     device = "cuda" if torch.cuda.is_available() else "cpu"
     n_outputs = 4 if periodic_labels else 2
-    model = NN_regression(  input_channels=input_channels,
+    model = NN_regression_2(  input_channels=input_channels,
                                 h=img_height,w=img_width,
                                 n_outputs=n_outputs).to(device)
     if approach == "periodic_labels" or approach == "baseline":
         loss = nn.MSELoss()
     elif approach == "minute_distance":
-        loss = CommonSenseError()
+        loss = MinutesDistance()
     else:
         print("Please choose a correct mode.")
         exit()
@@ -86,33 +86,32 @@ def main():
 
     # Load data
     data, labels = load_data(data_dir)
-    if verbose > 0:
-        print(f"data shape: {data.shape}, labels shape: {labels.shape}")
-
+    # split test set as to not apply data augmentation
+    test_data, test_labels = data[:data_splits[2],:], labels[:data_splits[2],:]
+    data, labels = data[data_splits[2]:,:], labels[data_splits[2]:,:]
     # Transform labels to periodic values if needed.
     if periodic_labels:
         labels = transform_labels(labels)
+        test_labels = transform_labels(test_labels)
+    if verbose > 0:
+        print(f"train data shape: {data.shape}, train labels shape: {labels.shape}")
+        print(f"test data shape: {test_data.shape}, test labels shape: {test_labels.shape}")
 
     # Create main dataset
-    clock_dataset = ClockDataset(data, labels, transform=True)
-    # Split dataset into train, test and validation sets
-    train_data, val_data, test_data = random_split(clock_dataset, data_splits)
+    clock_train_dataset = ClockDataset(data, labels, transform=True)
+    clock_test_datset = ClockDataset(test_data, test_labels, transform=False)
+    # Split dataset into train and validation sets
+    train_data, val_data = random_split(clock_train_dataset, data_splits[:2])
     # Create data loaders
-    train_data_loader = DataLoader(train_data, batch_size=batch_size)
-    val_data_loader = DataLoader(val_data, batch_size=batch_size)
-    test_data_loader = DataLoader(test_data, batch_size=batch_size)
+    train_data_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+    val_data_loader = DataLoader(val_data, batch_size=batch_size, shuffle=True)
+    test_data_loader = DataLoader(clock_test_datset, batch_size=batch_size)
     if verbose > 0:
         for X, y in train_data_loader:
             print(f"Shape of data batch [N, C, H, W]: {X.shape}")
             print(f"Shape of target batch: {y.shape}")
             break
 
-    # Prepare target array to use for evaluation
-    targets = []
-    for i in range(len(test_data)):
-        targets.append(test_data[i][1])
-    targets = np.vstack(targets)
-    
     # Main training loop
     curr_patience = 0
     train_losses = []
@@ -155,14 +154,14 @@ def main():
     predictions = predict(test_data_loader, model, loss, device, approach)
 
     # calculate and print common sense error
-    cse = CommonSenseError()
+    cse = MinutesDistance()
     if periodic_labels:
         # transform cosine and sine back to integer values
         cse_error = cse.minutes_loss(torch.FloatTensor(predictions),
-                                    torch.FloatTensor(targets[:,:2]))
+                                    torch.FloatTensor(test_labels[:,:2]))
     else:
         cse_error = cse.minutes_loss(torch.FloatTensor(predictions),
-                                    torch.FloatTensor(targets))
+                                    torch.FloatTensor(test_labels))
     print(f"Mean minute distance loss for the test dataset: {np.round(cse_error.numpy(),3)}")
 
     # create and save training plots

@@ -1,5 +1,5 @@
 from classes.ClockDataset import *
-from classes.CommonSenseError import *
+from classes.MinutesDistance import *
 from classes.Models import *
 from utilities import *
 import numpy as np
@@ -8,13 +8,14 @@ from torch.utils.data import DataLoader
 
 
 def main():
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # Parameters to tune
     weights_path = 'model_weights/periodic_labels_2'
-    batch_size=64
     approach = "periodic_labels"
+    batch_size=64
     data_dir = "data"
 
     # load model and weights
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     n_outputs = 4 if approach == "periodic_labels" else 2 
     model = NN_regression(  input_channels=1,
                             h=150,w=150,
@@ -22,10 +23,10 @@ def main():
     model.load_state_dict(torch.load(weights_path))
 
     # define loss function
-    if approach == "periodic_labels":
+    if approach == "periodic_labels" or approach == "baseline":
         loss = nn.MSELoss()
     else:
-        loss = CommonSenseError()
+        loss = MinutesDistance()
 
     # load data and create dataset
     data, labels = load_data(data_dir)
@@ -35,7 +36,7 @@ def main():
     data_loader = DataLoader(clock_dataset, batch_size=batch_size)
 
     # make predictions
-    cse = CommonSenseError()
+    cse = MinutesDistance()
     predictions = predict(data_loader, model, loss, device, approach)
     if approach == "periodic_labels":
         true_preds = denormalize_time(predictions)
