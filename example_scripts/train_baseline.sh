@@ -2,6 +2,7 @@
 
 python train.py \
 -approach "baseline" \
+-data_aug \
 -bs 64 \
 -lr 1e-4 \
 -epochs 200 \

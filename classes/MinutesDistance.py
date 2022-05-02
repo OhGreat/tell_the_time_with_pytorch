@@ -6,7 +6,7 @@ class MinutesDistance(nn.Module):
         super(MinutesDistance, self).__init__()
 
     def forward(self, prediction, target):
-        """ true distance error in minutes
+        """ distance error in minutes, without truncating integer values
         """
         preds = prediction.T
         labels = target.T
@@ -27,7 +27,7 @@ class MinutesDistance(nn.Module):
         return torch.mean(torch.abs(hour_dist + mins_dist))
 
     def minutes_loss(self, prediction, target):
-        """ True distance in minutes with integer truncate.
+        """ True distance in minutes with predictions integer truncate.
         """
         preds = torch.trunc(prediction.T)
         labels = target.T

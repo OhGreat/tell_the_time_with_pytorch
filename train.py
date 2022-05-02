@@ -10,7 +10,6 @@ from classes.Models import *
 from utilities import *
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-approach', action='store', 
                         dest='approach', type=str,
@@ -21,6 +20,9 @@ def main():
     parser.add_argument('-data_splits', action='store',
                         dest='data_splits', type=int,
                         nargs='+', default=[16500,1000,500])
+    parser.add_argument('-data_aug', action='store_true',
+                        help="Boolean value. Activates data augmentation \
+                            when used")
     parser.add_argument('-bs', action='store', 
                         dest='batch_size', type=int,
                         default=64)
@@ -40,7 +42,8 @@ def main():
                         help="Boolean value. Saves plots when used")
     parser.add_argument('-v', action='store',
                         dest='verbose', type=int,
-                        default=1, help="Defines terminal prints intensity. Should be 0,1 or 2.")
+                        default=1, help="Defines terminal prints intensity. \
+                            Should be 0,1 or 2.")
     args = parser.parse_args()
     if args.verbose > 0:
         print()
@@ -76,7 +79,8 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     epochs = args.epochs
     patience = args.patience
-    # extra parameters
+
+    # extra control parameters
     weights_name = args.weights_name
     save_plots = args.save_plots
     verbose = args.verbose
@@ -89,7 +93,7 @@ def main():
     # split test set as to not apply data augmentation
     test_data, test_labels = data[:data_splits[2],:], labels[:data_splits[2],:]
     data, labels = data[data_splits[2]:,:], labels[data_splits[2]:,:]
-    # Transform labels to periodic values if needed.
+    # Transform labels to periodic values if required.
     if periodic_labels:
         labels = transform_labels(labels)
         test_labels = transform_labels(test_labels)
@@ -98,7 +102,7 @@ def main():
         print(f"test data shape: {test_data.shape}, test labels shape: {test_labels.shape}")
 
     # Create main dataset
-    clock_train_dataset = ClockDataset(data, labels, transform=True)
+    clock_train_dataset = ClockDataset(data, labels, transform=args.data_aug)
     clock_test_datset = ClockDataset(test_data, test_labels, transform=False)
     # Split dataset into train and validation sets
     train_data, val_data = random_split(clock_train_dataset, data_splits[:2])
@@ -134,10 +138,12 @@ def main():
         print(f"Evaluation loss: {eval_mean:>8f}")
 
         # Save new weights if they are better
-        if (weights_name != None) and (eval_mean < mean_test_loss):
-            print("Saving new best weights.")
-            mean_test_loss = eval_mean
-            torch.save(model.state_dict(), "model_weights/"+weights_name)
+        if eval_mean < mean_test_loss:
+            curr_patience = 0
+            if weights_name != None: 
+                print("Saving new best weights.")
+                mean_test_loss = eval_mean
+                torch.save(model.state_dict(), "model_weights/"+weights_name)
             curr_patience = 0
         print()
 

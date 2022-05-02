@@ -1,7 +1,7 @@
 # Tell the time with pytorch
 
 
-This repository is an extract of an assignment from the Computer Science Master's course at Leiden University. It contains a framework used to train and evaluate neural networks on an image dataset of analog clocks. The purpose of this assignment was to tackle the periodic property of time, which would negatively affect the training of our model, if not handled correctly. Details on how this problem was tackled are present in the next section of this document. Pretrained models are also provided to complement the results of our experiments.
+This repository is an extract of an assignment from the Computer Science Master's course at Leiden University. It contains a framework created to train and evaluate neural networks on an image dataset of analog clocks. The purpose of this assignment was to tackle the periodic property of time, which would negatively affect the training of our model, if not handled correctly. Details on how this problem was tackled are present in the next section of this document. Pretrained models are also provided to complement the results of our experiments.
 
 ## Dataset 
 
@@ -30,6 +30,7 @@ Two main python scripts are available in the main directory. `train.py` that is 
 The script `train.py` accepts the following arguments:
 - `-approach` : defines the problem resolution method. Can be set to *"baseline"* to run the basic experiment, to *"periodic_labels"* to use the label tranformation approach,  to *"minute_distance"* to use the custom minute distance loss.
 - `-data_splits` : defines the split sizes for train, test and evaluation set.
+- `-data_aug` : activates data augmentation on the train set when used.
 - `-bs` : defines the batch size.
 - `-lr` : defines the learning rate of the optimizer used for training.
 - `-epochs` : defines the maximum number of epochs to train the model.
@@ -61,29 +62,31 @@ python evaluate.py
 
 ## Results and observations
 
-All configurations have been tested with very similar parameters in order to make as fair of a comparison as possible:
+The following parameters were used for the experiments:
 - `data splits`: 16500 samples for training set, 1000 for the evaluation set and 500 for the test set.
-- `neural network`: the same CNN configuration was used for all approaches
-- `learning rate`: 1e-4 for the periodic labels approach and 1e-5 for the baseline and minutes-loss approaches.
+- `data augmentation`: mild augmentation applied to the train dataset of all 3 approaches
+- `neural network`: the same CNN network was used for all approaches
+- `learning rate`: 1e-4 
 - `batch size`: 64
 - `maximum epochs`: 200
 - `patience`: 10
 
-In order to compare all the approaches, the minutes-distance loss was calculated after training on the test set and is reported below.
+In order to compare all the approaches, the minutes-distance loss was calculated, after training, on the test set and results are reported below.
 
-The baseline configuration simply uses the mean squared error as a metric without any label transformation and is used to bechmark our approaches.
-This approach reaches a minutes-distance loss of around 85.6 minutes on the test set and although the validation loss does not descend very smoothly, it  converges after around 40-60 epochs.
+The baseline configuration uses the mean squared error as a loss without any label transformation and is used to bechmark our approaches.
+This approach reached a minutes-distance loss of around 85.6 minutes on the test set and although the validation loss does not descend very smoothly, it  converges after around 40-60 epochs.
 
-The minutes-distance loss approach, on the other hand, achieves a mean loss of 48,8 minutes, which although is better than the baseline approach, the results are still unsatisfactory and the training very unstable.
+The minutes-distance loss approach, on the other hand, achieved a mean loss of 42.4 minutes, which although fairly better than the baseline approach, had a very unstable training. Although the results of this approach are still unsatisfactory, they could potentially be improved with more extensive parameter tuning and tuning of the loss function itself.
 
-Finally, the periodic encoded label configuration outperforms the other two and reaches a mean minutes-distance loss on the test set of around 12 minutes.
+Finally, the periodic encoded label configuration outperformed the other two, reacheing a sub 10 mean minutes-distance loss on the test set.
 The training was also very smooth, concluding that this approach is very well suited for the task at hand.
 
-<img src="https://github.com/OhGreat/tell_the_time_NN/blob/main/readme_aux/periodic_labels_losses.png"></img>
+The image below is a representation of the training process for the approaches mentioned:
+
+<img src="https://github.com/OhGreat/tell_the_time_NN/blob/main/readme_aux/all_trainings.png"></img>
 
 ## TODO
 
 - ~~fix custom loss approach~~
 - fix custom loss notebook
-- add args parser in evaluate script
-- add evaluate.py usage description
+- ~~add evaluate.py usage description~~
