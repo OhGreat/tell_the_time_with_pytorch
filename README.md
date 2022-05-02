@@ -41,12 +41,12 @@ The script `train.py` accepts the following arguments:
 
 To train an example network with the periodic-labelled approach, run the following python script from the `main directory`:
 ```
-python train.py -approach "periodic_labels" -weights_name "example_periodic" -v 1
+python train.py -approach "periodic_labels" -weights_name "model_weights/periodic" -v 1
 ```
 
 To use the custom minute-loss approach instead, run the following python script from the `main directory`:
 ```
-python train.py -approach "cse_loss" -lr 1e-5 -weights_name "example_cse" -v 1
+python train.py -approach "minute_distance" -lr 1e-5 -weights_name "model_weights/mins_dist" -v 1
 ```
 
 To run the bash scripts execute the following commands from the `main directory`, by substituting <bash_script.sh> with the name of the script you want to use in the `example_scripts` directory:

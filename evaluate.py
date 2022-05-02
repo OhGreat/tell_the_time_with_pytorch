@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 
 def main():
     # Parameters to tune
-    weights_path = 'model_weights/periodic_labels_2'
+    weights_path = 'model_weights/periodic'
     approach = "periodic_labels"
     batch_size=64
     data_dir = "data"
