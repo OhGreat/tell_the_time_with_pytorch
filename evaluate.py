@@ -9,24 +9,36 @@ from torch.utils.data import DataLoader
 
 def main():
     # Parameters to tune
-    weights_path = 'model_weights/periodic'
+    weights_path = 'model_weights/periodic_2'
     approach = "periodic_labels"
     batch_size=64
     data_dir = "data"
 
-    # load model and weights
     device = "cuda" if torch.cuda.is_available() else "cpu"
     n_outputs = 4 if approach == "periodic_labels" else 2 
-    model = NN_regression(  input_channels=1,
+
+    # define and load model and loss function
+    if approach == "baseline":
+        model = NN_regression(  input_channels=1,
                             h=150,w=150,
                             n_outputs=n_outputs).to(device)
-    model.load_state_dict(torch.load(weights_path))
-
-    # define loss function
-    if approach == "periodic_labels" or approach == "baseline":
+        model.load_state_dict(torch.load(weights_path))
+        loss = nn.MSELoss()
+    elif approach == "minute_distance":
+        model = NN_regression(  input_channels=1,
+                            h=150,w=150,
+                            n_outputs=n_outputs).to(device)
+        model.load_state_dict(torch.load(weights_path))
+        loss = MinutesDistance()
+    elif approach == "periodic_labels":
+        model = NN_regression_2(  input_channels=1,
+                            h=150,w=150,
+                            n_outputs=n_outputs).to(device)
+        model.load_state_dict(torch.load(weights_path))
         loss = nn.MSELoss()
     else:
-        loss = MinutesDistance()
+        print("Please chose correct approach.")
+        exit()
 
     # load data and create dataset
     data, labels = load_data(data_dir)
@@ -39,9 +51,8 @@ def main():
     cse = MinutesDistance()
     predictions = predict(data_loader, model, loss, device, approach)
     if approach == "periodic_labels":
-        true_preds = denormalize_time(predictions)
         # define common sense error
-        cse_error = cse(torch.FloatTensor(true_preds),torch.FloatTensor(labels[:,:2]))
+        cse_error = cse(torch.FloatTensor(predictions),torch.FloatTensor(labels[:,:2]))
     else:
         cse_error = cse(torch.FloatTensor(predictions),torch.FloatTensor(labels))
     print(f"Common sense error: {cse_error}")

@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 import torchvision.transforms as T
 
 class ClockDataset(Dataset):
-    def __init__(self, data, targets, transform=None):
+    def __init__(self, data, targets, transform=False):
         self.data = data
         self.targets = targets
         self.transform = transform

@@ -1,4 +1,0 @@
-periodic with data augmentation:
-train: 0.78
-eval: 0.053
-test: 9.13 minute-dist

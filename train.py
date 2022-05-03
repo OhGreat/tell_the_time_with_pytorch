@@ -65,12 +65,20 @@ def main():
     # model parameters
     device = "cuda" if torch.cuda.is_available() else "cpu"
     n_outputs = 4 if periodic_labels else 2
-    model = NN_regression_2(  input_channels=input_channels,
-                                h=img_height,w=img_width,
-                                n_outputs=n_outputs).to(device)
-    if approach == "periodic_labels" or approach == "baseline":
+    if approach == "baseline":
+        model = NN_regression(  input_channels=input_channels,
+                            h=img_height,w=img_width,
+                            n_outputs=n_outputs).to(device)
+        loss = nn.MSELoss()
+    if approach == "periodic_labels":
+        model = NN_regression_2(  input_channels=input_channels,
+                            h=img_height,w=img_width,
+                            n_outputs=n_outputs).to(device)
         loss = nn.MSELoss()
     elif approach == "minute_distance":
+        model = NN_regression(  input_channels=input_channels,
+                            h=img_height,w=img_width,
+                            n_outputs=n_outputs).to(device)
         loss = MinutesDistance()
     else:
         print("Please choose a correct mode.")
@@ -121,12 +129,14 @@ def main():
     train_losses = []
     eval_losses = []
     mean_test_loss = np.inf
+    temp_best_weights = model.state_dict()
     print("\n~~~Starting training~~~\n")
     start_time = time.time()
     for t in range(epochs):
         print(f"Epoch {t+1}\n-------------------------------")
         # Training step
-        train_l = train(train_data_loader, model, loss, optimizer, device, approach)
+        train_l = train(train_data_loader, model, loss, 
+                        optimizer, device, approach)
         train_mean = torch.mean(train_l)
         train_losses.append(train_mean)
         print(f"Training loss: {train_mean:>7f}")
@@ -140,11 +150,12 @@ def main():
         # Save new weights if they are better
         if eval_mean < mean_test_loss:
             curr_patience = 0
+            temp_best_weights = model.state_dict()
+            print("New best weights found.")
             if weights_name != None: 
                 print("Saving new best weights.")
                 mean_test_loss = eval_mean
                 torch.save(model.state_dict(), "model_weights/"+weights_name)
-            curr_patience = 0
         print()
 
         # Stop training if patience expired
@@ -155,6 +166,9 @@ def main():
 
     end_time = time.time()
     print(f"Training finished in {np.round(end_time-start_time, 3)} seconds.")
+
+    # Load best model weights
+    model.load_state_dict(temp_best_weights)
 
     # make predictions on test dataset
     predictions = predict(test_data_loader, model, loss, device, approach)
