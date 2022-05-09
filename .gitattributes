@@ -1,2 +1,3 @@
 # Jupyter notebook line couter fix
 notebooks/*.ipynb linguist-documentation
+train_plots/*.ipynb linguist-documentation
