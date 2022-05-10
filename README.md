@@ -17,12 +17,12 @@ In order to solve the above limitation, two main approaches have been used. The 
 
 ## Prerequisites
 
-To use the repository and run the available scripts, `Python3` needs to be installed together with the following packages:
-- `numpy`
-- `pytorch` (CUDA is recommended)
-- `torchvision`
-- `PIL`
-- `matplotlib`
+To use the repository and run the available scripts, `Python3` needs to be installed together with the packages specified in the `requirements.txt` file. To install the requirements, execute from the `main directory` the following command:
+
+
+```
+pip install -r requirements.txt
+```
 
 ## Usage
 
